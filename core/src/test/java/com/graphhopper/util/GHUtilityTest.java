@@ -77,25 +77,84 @@ public class GHUtilityTest {
 
     @Test
     public void testgetAdjnode() {
-        // Création du graph et de sa population
         try (BaseGraph graph = createGraph(null)) {
-            graph.edge(0, 1).setDistance(10);
-            graph.edge(1, 2).setDistance(10);
-            graph.edge(0, 2).setDistance(20);
+            EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
+            EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
+            EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(20);
+
+            int id01 = edge01.getEdge();
+            int id12 = edge12.getEdge();
+            int id02 = edge02.getEdge();
 
             // Correct
-            assertEquals(1, GHUtility.getAdjNode(graph, 0, 1));  // from edge 0-1, no0 → 1
-            assertEquals(0, GHUtility.getAdjNode(graph, 0, 0));  // from 0 → 1
+            assertEquals(1, GHUtility.getAdjNode(graph, id01, 1));
+            assertEquals(0, GHUtility.getAdjNode(graph, id01, 0));
 
             // Incorrect
             assertThrows(NullPointerException.class, () -> {
-                GHUtility.getAdjNode(graph, 1, 0); // from 1 → 0 edge does not exist so nullPointer
+                GHUtility.getAdjNode(graph, id12, 0); // from 1 → 2,node 0 does not exist so nullPointer
             });
             int invalidEdgeId = -1;
-            assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1));  // from -1 → 1 invalid edge id returns adjNode
+            assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1));  // from invalid edge id returns adjNode
         }
     }
 
+    @Test
+    public void testpathsEqualExceptOneEdge() {
+        int source = 0;
+        int target = 2;
+        int distanceRef = 20;
+        int distanceAlt =20;
+        int timeRef = 10000;
+        int timeAlt = 10000;
+        int weightRef = 10;
+        int weightAlt = 10;
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 10, 0.5, true);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).build();
+
+        // Same distance, time, weight
+        List<String> violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
+        assertTrue(violations.isEmpty(), "Equivalent paths should not produce violations");
+
+        // Different length
+        distanceRef=distanceAlt+10;
+        violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
+        assertFalse(violations.isEmpty(), "Different length paths should produce violations");
+        distanceRef=10;// reset distance
+
+        // Different time
+        timeRef=timeAlt+100;
+        violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
+        assertFalse(violations.isEmpty(), "Different time paths should produce violations");
+        timeRef=timeAlt;// reset time
+
+    }
+
+    private List<String> testPaths(EncodingManager encodingManager, int distanceRef, int weightRef, int timeRef, int source, int target, int weightAlt, int distanceAlt, int timeAlt) {
+        try (BaseGraph graph = createGraph(encodingManager)) {
+
+            EdgeIteratorState edge01 = graph.edge(0, 1).setDistance((double) distanceRef/2);
+            EdgeIteratorState edge12 = graph.edge(1, 2).setDistance((double) distanceRef/2);
+            EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(distanceAlt);
+
+            int id01 = edge01.getEdge();
+            int id12 = edge12.getEdge();
+            int id02 = edge02.getEdge();
+
+            Path refPath = new Path(graph);
+            refPath.setWeight(weightRef).setDistance(distanceRef).setTime(timeRef);
+            refPath.addEdge(id01);
+            refPath.addEdge(id12);
+            refPath.setFromNode(source).setEndNode(target);
+
+            Path altPath = new Path(graph);
+            altPath.setWeight(weightAlt).setDistance(distanceAlt).setTime(timeAlt);
+            altPath.addEdge(id02);
+            altPath.setFromNode(source).setEndNode(target);
+
+            return GHUtility.comparePaths(refPath, altPath, source, target, SEED);
+        }
+    }
 
     public BaseGraph createGraph(EncodingManager em) {
         if (em == null) {
