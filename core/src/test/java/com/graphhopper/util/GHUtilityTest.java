@@ -22,7 +22,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.*;
 import org.junit.jupiter.api.Test;
 
@@ -87,15 +86,16 @@ public class GHUtilityTest {
             int id02 = edge02.getEdge();
 
             // Correct
-            assertEquals(1, GHUtility.getAdjNode(graph, id01, 1));
-            assertEquals(0, GHUtility.getAdjNode(graph, id01, 0));
+            assertEquals(1, GHUtility.getAdjNode(graph, id01, 1), "Node 0 is adjacent to node 1.");
+            assertEquals(0, GHUtility.getAdjNode(graph, id01, 0), "Node 1 is adjacent to node 0.");
 
             // Incorrect
             assertThrows(NullPointerException.class, () -> {
-                GHUtility.getAdjNode(graph, id12, 0); // from 1 → 2,node 0 does not exist so nullPointer
-            });
+                GHUtility.getAdjNode(graph, id12, 0);
+            }, "Node `0` does not exist on the edge and should throw an exception");
             int invalidEdgeId = -1;
-            assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1));  // from invalid edge id returns adjNode
+            assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1),
+                    "Node `1` does not exist on the invalid edge and should throw an exception");  // from invalid edge id returns adjNode
         }
     }
 
@@ -114,36 +114,41 @@ public class GHUtilityTest {
 
         // Same distance, time, weight
         List<String> violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
-        assertTrue(violations.isEmpty(), "Equivalent paths should not produce violations");
+        assertTrue(violations.isEmpty(), "Equivalent paths should not produce violations.");
 
         // Different length
         distanceRef=distanceAlt+10;
         violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
-        assertFalse(violations.isEmpty(), "Different length paths should produce violations");
+        assertFalse(violations.isEmpty(), "Different length paths should produce violations.");
         distanceRef=10;// reset distance
 
         // Different time
         timeRef=timeAlt+100;
         violations = testPaths(encodingManager, distanceRef, weightRef, timeRef, source, target, weightAlt, distanceAlt, timeAlt);
-        assertFalse(violations.isEmpty(), "Different time paths should produce violations");
+        assertFalse(violations.isEmpty(), "Different time paths should produce violations.");
         timeRef=timeAlt;// reset time
 
         // Different weight
-        weightRef=weightAlt+100;
         int finalDistanceRef = distanceRef;
-        int finalWeightRef = weightRef;
+        int finalWeightRef = weightAlt+100;
         int finalTimeRef = timeRef;
         assertThrows(AssertionError.class, () -> {
             testPaths(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef, source, target, weightAlt, distanceAlt, timeAlt);
-        }); // Different weight paths should produce fail
-        weightRef=weightAlt;// reset weight
+        }, "Different weight paths should produce fail.");
+
+        // Different Graphs
+        assertThrows(AssertionError.class, () -> {
+            testPathsDifferentGraphs(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef,
+                    source, target, weightAlt, distanceAlt, timeAlt);
+        }, "Different graph structure should trigger AssertionError.");
+
     }
 
     private List<String> testPaths(EncodingManager encodingManager, int distanceRef, int weightRef, int timeRef, int source, int target, int weightAlt, int distanceAlt, int timeAlt) {
         try (BaseGraph graph = createGraph(encodingManager)) {
 
-            EdgeIteratorState edge01 = graph.edge(0, 1).setDistance((double) distanceRef/2);
-            EdgeIteratorState edge12 = graph.edge(1, 2).setDistance((double) distanceRef/2);
+            EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(distanceRef/2.0);
+            EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(distanceRef/2.0);
             EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(distanceAlt);
 
             int id01 = edge01.getEdge();
@@ -165,6 +170,58 @@ public class GHUtilityTest {
         }
     }
 
+    private void testPathsDifferentGraphs(EncodingManager encodingManager,
+                                          int distanceRef, int weightRef, int timeRef,
+                                          int source, int target,
+                                          int weightAlt, int distanceAlt, int timeAlt) {
+        try (BaseGraph graphA = createGraph(encodingManager);
+             BaseGraph graphB = createGraph(encodingManager)) {
+
+            EdgeIteratorState e01 = graphA.edge(0, 1).setDistance(distanceRef / 2.0);
+            EdgeIteratorState e12 = graphA.edge(1, 2).setDistance(distanceRef / 2.0);
+            int id01 = e01.getEdge(), id12 = e12.getEdge();
+
+            EdgeIteratorState e02 = graphB.edge(0, 2).setDistance(distanceAlt);
+            int id02 = e02.getEdge();
+
+            Path refPath = new Path(graphA).setWeight(weightRef).setDistance(distanceRef).setTime(timeRef);
+            refPath.addEdge(id01);
+            refPath.addEdge(id12);
+            refPath.setFromNode(source).setEndNode(target);
+
+            Path altPath = new Path(graphB).setWeight(weightAlt).setDistance(distanceAlt).setTime(timeAlt);
+            altPath.addEdge(id02);
+            altPath.setFromNode(source).setEndNode(target);
+
+            GHUtility.comparePaths(refPath, altPath, source, target, SEED);
+        }
+    }
+
+    @Test
+    public void testgetCommonNode(){
+        try (BaseGraph graph = createGraph(null)) {
+            EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
+            EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
+            EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(20);
+            EdgeIteratorState edge23 = graph.edge(2, 3).setDistance(20);
+
+
+            int id01 = edge01.getEdge();
+            int id12 = edge12.getEdge();
+            int id02 = edge02.getEdge();
+            int id23 = edge23.getEdge();
+
+            // valid
+            assertEquals(1, GHUtility.getCommonNode(graph, id01, id12), "the common node `1` should be returned.");
+            assertEquals(0, GHUtility.getCommonNode(graph, id01, id02), "the common node `0` should be returned.");
+
+            // no common node
+            assertThrows(IllegalArgumentException.class, () -> {GHUtility.getCommonNode(graph, id01, id23);},"Edges not sharing any nodes should return an Exception.");
+
+            // form a circle
+            assertThrows(IllegalArgumentException.class, () -> {GHUtility.getCommonNode(graph, id01, id01);},"Edges forming a circle should return an Exception.");
+        }
+    }
     public BaseGraph createGraph(EncodingManager em) {
         if (em == null) {
             return new BaseGraph(
