@@ -128,6 +128,15 @@ public class GHUtilityTest {
         assertFalse(violations.isEmpty(), "Different time paths should produce violations");
         timeRef=timeAlt;// reset time
 
+        // Different weight
+        weightRef=weightAlt+100;
+        int finalDistanceRef = distanceRef;
+        int finalWeightRef = weightRef;
+        int finalTimeRef = timeRef;
+        assertThrows(AssertionError.class, () -> {
+            testPaths(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef, source, target, weightAlt, distanceAlt, timeAlt);
+        }); // Different weight paths should produce fail
+        weightRef=weightAlt;// reset weight
     }
 
     private List<String> testPaths(EncodingManager encodingManager, int distanceRef, int weightRef, int timeRef, int source, int target, int weightAlt, int distanceAlt, int timeAlt) {
