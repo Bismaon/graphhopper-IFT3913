@@ -18,7 +18,15 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.storage.*;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
+    final int GRAPH_SIZE = 128;
+    final int SEED = 42;
 
     @Test
     public void testEdgeStuff() {
@@ -64,4 +74,40 @@ public class GHUtilityTest {
 //        assertEquals(1, map2.get(2));
 //        assertEquals(-1, map2.get(3));
     }
+
+    @Test
+    public void testgetAdjnode() {
+        // Création du graph et de sa population
+        try (BaseGraph graph = createGraph(null)) {
+            graph.edge(0, 1).setDistance(10);
+            graph.edge(1, 2).setDistance(10);
+            graph.edge(0, 2).setDistance(20);
+
+            // Correct
+            assertEquals(1, GHUtility.getAdjNode(graph, 0, 1));  // from edge 0-1, no0 → 1
+            assertEquals(0, GHUtility.getAdjNode(graph, 0, 0));  // from 0 → 1
+
+            // Incorrect
+            assertThrows(NullPointerException.class, () -> {
+                GHUtility.getAdjNode(graph, 1, 0); // from 1 → 0 edge does not exist so nullPointer
+            });
+            int invalidEdgeId = -1;
+            assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1));  // from -1 → 1 invalid edge id returns adjNode
+        }
+    }
+
+
+    public BaseGraph createGraph(EncodingManager em) {
+        if (em == null) {
+            return new BaseGraph(
+                    new RAMDirectory(),
+                    false,
+                    false,
+                    128,
+                    8).create(GRAPH_SIZE);
+        } else {
+            return new BaseGraph.Builder(em).create();
+        }
+    }
 }
+
