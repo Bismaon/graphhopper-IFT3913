@@ -193,7 +193,6 @@
                         <param>com.graphhopper.util.GHUtilityTest</param>
                     </targetTests>
                     <threads>4</threads>
-                    <mutationThreshold>0</mutationThreshold>
                     <outputFormats>
                         <param>HTML</param>
                     </outputFormats>

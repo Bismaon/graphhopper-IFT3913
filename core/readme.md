@@ -101,29 +101,74 @@ Le code de `getProblems(...)` doit détecter les différentes violations de plag
 - Les coordonnées sont correctes et donc la liste de probleme est vide.
 - Les coordonnées sont incorrectes et donc la liste de probleme contiennent les problèmes du `Graph` dans l'ordre dans des `Node`.
 
+#### Test 5 : `testGetDistance()`
+
+**Intention du test**
+
+Vérifier que la méthode `getDistance()` retourne une distance pertinente entre 2 coordonnées valides et 0 (ou presque avec les erreurs avec les points flottants) si essaie la distance entre un point et lui-même.
+Egalement vérifier que la méthode n'essaie pas de normaliser des coordonnées invalides.
+
+**Motivation des données de test choisies**
+
+- Les 2 premiers coordonnées sont valides et ont une distance entre eux d'environ 300-350km
+- La 3eme paire de coordonnées est invalide et la distance entre lui et un autre point valide ne sera pas cohérent
+
+**Explication de l'Oracle**
+
+Le code de `getDistance(...)` doit retourner une distance cohérente et plus ou moin précis entre 2 points
+
+- Les coordonnées sont valides et la distance est cohérente.
+- Les coordonnées ne sont pas valides et la distance n'est pas cohérente
+
+
+#### Test 6 : `testGetEdge()`
+
+**Intention du test**
+
+
+Vérifier que la méthode `getEdge()` ne retourne rien lorsqu'un edge n'existe pas, retourn quelque chose lorsqu'il y a exactement 1 et un IllegalArgumentException lorsque le graphe est invalide et contient 2 edges pour 2 mêmes nodes. 
+
+**Motivation des données de test choisies**
+
+- Au début le graph est parfaitment valide et lors des 2 premiers appels devrait fonctionner correctement
+- Un deuxième edge est ajouté entre 0 et 1 pour vérifier que la méthode refuse bien la validité du graphe
+
+**Explication de l'Oracle**
+
+Le code de `getEdge(...)` doit retourner soit null, un edge ou une exception lorsqu'un graphe et 2 nodes sont donnés. 
+
+- Le graphe et valide retourne soit null ou exactement 1 edge
+- Le graphe n'est pas valide et retourne une exception
+
+#### Test 7 : `testSetSpeed()`
+
+**Intention du test**
+
+Vérifier que la méthode `setSpeed()` configure correctement la vitesse et l'accès sur un edge dans les deux directions et que des vitesse invalides throw une exception.
+
+**Motivation des données de test choisies**
+
+- Un edge est créé entre les nodes 0 et 1 pour tester la modification de ses attributs.
+- La vitesse avant et arrière sont testées pour vérifier que setSpeed gère correctement les directions.
+- La vitesse nulle est testée pour s'assurer qu'une erreur IllegalStateException est thrown lorsqu'on tente de définir un edge accessible avec une 0 vitesse.
+
+**Explication de l'Oracle**
+
+Le code de `getEdge(...)` doit correctement gérer les vitesses et accès dans les 2 directions
+
+- Lorsqu'on va en avant ou en arrière à une vitesse valide, l'edge doit être accessible dans le sens approprié et stocker la vitesse correspondante.
+- La vitesse est 0 et donc le mouvement est invalide et throw une exception
+
 ## Pitest
 
 ### Vue d'ensemble globale
 
-| Métrique              | Avant      | Après        | Évolution |
-|-----------------------|------------|--------------|-----------|
-| **Line Coverage**     | 1% (4/355) | 24% (85/355) | + 23%     |
-| **Mutation Coverage** | 2% (4/264) | 21% (56/264) | + 19%     |
+#### `com.graphhopper.util.GHUtility.java`
 
-#### `com.graphhopper.util`
-
-| Métrique              | Avant      | Après        | Évolution |
-|-----------------------|------------|--------------|-----------|
-| **Line Coverage**     | 1% (4/355) | 24% (85/355) | + 23%     |
-| **Mutation Coverage** | 2% (4/264) | 21% (56/264) | + 19%     |
-
-#### `com.graphhopper.xxx`
-
-| Métrique              | Avant    | Après    | Évolution |
-|-----------------------|----------|----------|-----------|
-| **Line Coverage**     | 0% (0/0) | 0% (0/0) | + 0%      |
-| **Mutation Coverage** | 0% (0/0) | 0% (0/0) | + 0%      |
-
+| Métrique              | Avant      | Après         | Évolution |
+|-----------------------|------------|---------------|-----------|
+| **Line Coverage**     | 1% (4/355) | 35% (123/355) | + 34%     |
+| **Mutation Coverage** | 2% (4/264) | 30% (78/264)  | + 28%     |
 
 
 ---
@@ -131,3 +176,7 @@ Le code de `getProblems(...)` doit détecter les différentes violations de plag
 ### Mutants
 
 ## Java Faker
+
+Pour choisir une bonne méthode pour utiliser Java Faker il a fallu trouver une méthode qui peut accepter des valeurs aléatoires comme des noms, addresses ou coordonnées.
+On s'est donc décidé sur createCircle puisqu'elle est simple mais aussi importante et bien compatible avec Java Faker.
+On lui donne un Id et aussi des coordonnées aléatoires puis on vérifie que le cercle est valide en regardant si il contient son centre supposé au bon endroit.
