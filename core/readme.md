@@ -39,7 +39,7 @@ La methode `getAdjNode()` parcours les `Edge`, de `Node` en `Node` afin de renvo
 
 **Intention du test**
 
-Vérifier que la méthode `testPathsEqualExceptOneEdge()` compare correctement deux `Path` et verifie qu'ils font bien la même distance sinon qu'elle puisse noter les bonnes violations entre les deux `Path`.
+Vérifier que la méthode `pathsEqualExceptOneEdge()` compare correctement deux `Path` et verifie qu'ils font bien la même distance sinon qu'elle puisse noter les bonnes violations entre les deux `Path`.
 
 **Motivation des données de test choisies**
 
@@ -48,7 +48,7 @@ Vérifier que la méthode `testPathsEqualExceptOneEdge()` compare correctement d
 -
 **Explication de l'Oracle**
 
-La methode `PathsEqualExceptOneEdge()` compare deux `Path` et génère la liste de violations dû aux différences entre les `Path`.
+La methode `pathsEqualExceptOneEdge()` compare deux `Path` et génère la liste de violations dû aux différences entre les `Path`.
 
 - Lorsque les `Path` sont identiques ou tres similaire (différence plus petite que les balises mise dans le code) alors la liste de violations est vide.
 - Lorsque les `Path` sont différents alors la liste de violations est peuplé d'entrées correspondantes aux différences entre les deux `Path`.
