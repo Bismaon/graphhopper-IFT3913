@@ -168,7 +168,7 @@ Le code de `getEdge(...)` doit correctement gérer les vitesses et accès dans l
 | Métrique              | Avant      | Après         | Évolution |
 |-----------------------|------------|---------------|-----------|
 | **Line Coverage**     | 1% (4/355) | 35% (123/355) | + 34%     |
-| **Mutation Coverage** | 2% (4/264) | 30% (78/264)  | + 28%     |
+| **Mutation Coverage** | 2% (4/264) | 30% (79/264)  | + 28%     |
 
 
 ---
@@ -177,6 +177,6 @@ Le code de `getEdge(...)` doit correctement gérer les vitesses et accès dans l
 
 ## Java Faker
 
-Pour choisir une bonne méthode pour utiliser Java Faker il a fallu trouver une méthode qui peut accepter des valeurs aléatoires comme des noms, addresses ou coordonnées.
-On s'est donc décidé sur createCircle puisqu'elle est simple mais aussi importante et bien compatible avec Java Faker.
-On lui donne un Id et aussi des coordonnées aléatoires puis on vérifie que le cercle est valide en regardant si il contient son centre supposé au bon endroit.
+Pour choisir une bonne méthode pour utiliser Java Faker, il a fallu trouver une méthode qui peut accepter des valeurs aléatoires comme des noms, addresses ou coordonnées.
+On s'est donc décidé sur `createCircle` puisqu'elle est simple, mais aussi importante et bien compatible avec Java Faker.
+On lui donne un `Id` et aussi des coordonnées aléatoires puis on vérifie que le cercle est valide en regardant s'il contient son centre supposé au bon endroit.

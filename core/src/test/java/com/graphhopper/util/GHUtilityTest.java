@@ -62,19 +62,19 @@ public class GHUtilityTest {
         // instead of assertEquals(-1, map1.get(3)); with hppc we have to check before:
         assertTrue(map1.containsKey(0));
 
-        // trove4j behaviour was to return -1 if non existing:
-//        TIntLongHashMap map2 = new TIntLongHashMap(100, 0.7f, -1, -1);
-//        assertFalse(map2.containsKey(0));
-//        assertFalse(map2.containsValue(0));
-//        map2.add(0, 3);
-//        map2.add(1, 0);
-//        map2.add(2, 1);
-//        assertTrue(map2.containsKey(0));
-//        assertTrue(map2.containsValue(0));
-//        assertEquals(3, map2.get(0));
-//        assertEquals(0, map2.get(1));
-//        assertEquals(1, map2.get(2));
-//        assertEquals(-1, map2.get(3));
+        // trove4j behaviour was to return -1 if non-existing:
+        // TIntLongHashMap map2 = new TIntLongHashMap(100, 0.7f, -1, -1);
+        // assertFalse(map2.containsKey(0));
+        // assertFalse(map2.containsValue(0));
+        // map2.add(0, 3);
+        // map2.add(1, 0);
+        // map2.add(2, 1);
+        // assertTrue(map2.containsKey(0));
+        // assertTrue(map2.containsValue(0));
+        // assertEquals(3, map2.get(0));
+        // assertEquals(0, map2.get(1));
+        // assertEquals(1, map2.get(2));
+        // assertEquals(-1, map2.get(3));
     }
 
     private BaseGraph createGraph(EncodingManager em) {
@@ -89,7 +89,6 @@ public class GHUtilityTest {
             return new BaseGraph.Builder(em).create();
         }
     }
-
 
     private List<String> testPaths(EncodingManager encodingManager, double distanceRef, double weightRef, int timeRef, int source, int target, double weightAlt, double distanceAlt, int timeAlt) {
         try (BaseGraph graph = createGraph(encodingManager)) {
@@ -120,7 +119,7 @@ public class GHUtilityTest {
     private void testPathsDifferentGraphs(EncodingManager encodingManager,
                                           double distanceRef, double weightRef, int timeRef,
                                           int source, int target,
-                                          double weightAlt, double distanceAlt, int timeAlt) {
+                                          double distanceAlt, double weightAlt, int timeAlt) {
         try (BaseGraph graphA = createGraph(encodingManager);
              BaseGraph graphB = createGraph(encodingManager)) {
 
@@ -149,7 +148,6 @@ public class GHUtilityTest {
         try (BaseGraph graph = createGraph(null)) {
             EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
             EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
-            EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(20);
 
             int id01 = edge01.getEdge();
             int id12 = edge12.getEdge();
@@ -159,9 +157,7 @@ public class GHUtilityTest {
             assertEquals(0, GHUtility.getAdjNode(graph, id01, 0), "Node `1` is adjacent to node `0`.");
 
             // Incorrect
-            assertThrows(NullPointerException.class, () -> {
-                GHUtility.getAdjNode(graph, id12, 0);
-            }, "Node `0` does not exist on the edge and should throw an exception.");
+            assertThrows(NullPointerException.class, () -> GHUtility.getAdjNode(graph, id12, 0), "Node `0` does not exist on the edge and should throw an exception.");
             int invalidEdgeId = -1;
             assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1),
                     "Node `1` does not exist on the invalid edge and should return the adjNode specified.");
@@ -219,15 +215,11 @@ public class GHUtilityTest {
         double finalDistanceAlt = distanceAlt;
         double finalWeightRef = weightAlt + 2.e-2;
         int finalTimeRef = timeRef;
-        assertThrows(AssertionError.class, () -> {
-            testPaths(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef, source, target, weightAlt, finalDistanceAlt, timeAlt);
-        }, "Different weight paths should produce fail.");
+        assertThrows(AssertionError.class, () -> testPaths(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef, source, target, weightAlt, finalDistanceAlt, timeAlt), "Different weight paths should produce fail.");
 
         // Different Graphs
-        assertThrows(AssertionError.class, () -> {
-            testPathsDifferentGraphs(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef,
-                    source, target, weightAlt, finalDistanceAlt, timeAlt);
-        }, "Different graph structure should trigger AssertionError.");
+        assertThrows(AssertionError.class, () -> testPathsDifferentGraphs(encodingManager, finalDistanceRef, finalWeightRef, finalTimeRef,
+                source, target, weightAlt, finalDistanceAlt, timeAlt), "Different graph structure should trigger AssertionError.");
 
     }
 
@@ -235,28 +227,33 @@ public class GHUtilityTest {
     public void testGetCommonNode() {
         try (BaseGraph graph = createGraph(null)) {
             EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
+            EdgeIteratorState edge10 = graph.edge(1, 0).setDistance(10);
             EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
+            EdgeIteratorState edge21 = graph.edge(2, 1).setDistance(10);
             EdgeIteratorState edge02 = graph.edge(0, 2).setDistance(20);
+            EdgeIteratorState edge20 = graph.edge(2, 0).setDistance(20);
             EdgeIteratorState edge23 = graph.edge(2, 3).setDistance(20);
 
             int id01 = edge01.getEdge();
+            int id10 = edge10.getEdge();
             int id12 = edge12.getEdge();
+            int id21 = edge21.getEdge();
             int id02 = edge02.getEdge();
+            int id20 = edge20.getEdge();
             int id23 = edge23.getEdge();
 
             // valid
             assertEquals(1, GHUtility.getCommonNode(graph, id01, id12), "the common node `1` should be returned.");
             assertEquals(0, GHUtility.getCommonNode(graph, id01, id02), "the common node `0` should be returned.");
+            assertEquals(0, GHUtility.getCommonNode(graph, id01, id20), "the common node `0` should be returned.");
+            assertEquals(1, GHUtility.getCommonNode(graph, id01, id21), "the common node `1` should be returned.");
 
             // no common node
-            assertThrows(IllegalArgumentException.class, () -> {
-                GHUtility.getCommonNode(graph, id01, id23);
-            }, "Edges not sharing any nodes should return an Exception.");
+            assertThrows(IllegalArgumentException.class, () -> GHUtility.getCommonNode(graph, id01, id23), "Edges not sharing any nodes should return an Exception.");
 
             // form a circle
-            assertThrows(IllegalArgumentException.class, () -> {
-                GHUtility.getCommonNode(graph, id01, id01);
-            }, "Edges forming a circle should return an Exception.");
+            assertThrows(IllegalArgumentException.class, () -> GHUtility.getCommonNode(graph, id01, id01), "Edges forming a circle should return an Exception.");
+            assertThrows(IllegalArgumentException.class, () -> GHUtility.getCommonNode(graph, id01, id10), "Edges forming a circle should return an Exception.");
         }
     }
 
@@ -292,7 +289,6 @@ public class GHUtilityTest {
         }
     }
 
-
     @Test
     public void testGetDistanceBetweenNodes() {
         try (BaseGraph graph = createGraph(null)) {
@@ -308,17 +304,17 @@ public class GHUtilityTest {
             double dist = GHUtility.getDistance(0, 1, na);
 
             // Expected distance between those coordinates
-            assertTrue(dist > 300_000 && dist < 350_000);
+            assertTrue(dist > 300_000 && dist < 350_000, "Distance between Paris and London should be approximately 340 km");
 
             // Same node -> distance should be 0
             double distSame = GHUtility.getDistance(0, 0, na);
             assertEquals(0.0, distSame, 1e-6, "Distance between same nodes should be 0");
 
             // 12742 km being the greatest possible distance between 2 points on earth
-            // Making sure the method doesnt try to normalise invalid values and give something
+            // Making sure the method doesn't try to normalise invalid values and give something
             // coherent
             double distInvalid = GHUtility.getDistance(0, 2, na);
-            assertTrue(distInvalid > 12742000);
+            assertTrue(distInvalid > 12742000,"Invalid coordinates should return an unrealistic distance greater than Earth's diameter (~12,742 km)");
         }
     }
 
@@ -331,18 +327,16 @@ public class GHUtilityTest {
             graph.edge(2, 3).setDistance(20);
 
             // No edge should return null
-            assertNull(GHUtility.getEdge(graph, 0, 3));
+            assertNull(GHUtility.getEdge(graph, 0, 3),"getEdge() should return `null` when no edge exists between nodes 0 and 3");
 
             // Single edge should return non-null
             EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
-            assertNotNull(edge);
+            assertNotNull(edge,"getEdge() should return a valid `EdgeIteratorState` when an edge exists between nodes 0 and 1");
 
-            // Multiple edges should throw IllegalArgumentException saying:
-            // "There are multiple edges between nodes 0 and 1"
             graph.edge(0,1).setDistance(25);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> GHUtility.getEdge(graph, 0, 1));
-            assertTrue(ex.getMessage().contains("multiple edges"));
+                    () -> GHUtility.getEdge(graph, 0, 1), "Multiple edges should throw IllegalArgumentException saying: \"There are multiple edges between nodes 0 and 1\"");
+            assertTrue(ex.getMessage().contains("multiple edges"),"Exception message should clearly mention 'multiple edges' to indicate the cause of the failure");
         }
     }
 
@@ -358,19 +352,17 @@ public class GHUtilityTest {
 
             GHUtility.setSpeed(60.0, true, false, accessEnc, speedEnc, edge);
 
-            assertTrue(edge.get(accessEnc));
-            assertEquals(60.0, edge.get(speedEnc), 0.001);
+            assertTrue(edge.get(accessEnc),"Forward access flag should be set to true when fwd=true in setSpeed()");
+            assertEquals(60.0, edge.get(speedEnc), 0.001, "Forward speed should be encoded as 60.0 km/h for the forward direction");
 
             // Backwards
             GHUtility.setSpeed(40.0, false, true, accessEnc, speedEnc, edge);
 
-            assertFalse(edge.get(accessEnc));
-            assertEquals(40.0, edge.getReverse(speedEnc), 0.001);
+            assertFalse(edge.get(accessEnc),"Forward access flag should be false when only backward direction is enabled");
+            assertEquals(40.0, edge.getReverse(speedEnc), 0.001,"Backward speed should be encoded as 40.0 km/h for the reverse direction");
 
             // No speed
-            assertThrows(IllegalStateException.class, () -> {
-                GHUtility.setSpeed(0.0, true, false, accessEnc, speedEnc, edge);
-            });
+            assertThrows(IllegalStateException.class, () -> GHUtility.setSpeed(0.0, true, false, accessEnc, speedEnc, edge),"Setting a zero speed while the edge is accessible should throw `IllegalStateException`");
         }
     }
 
@@ -386,12 +378,12 @@ public class GHUtilityTest {
 
         var circleFeature = GHUtility.createCircle(circleId, centerLat, centerLon, radius);
 
-        assertNotNull(circleFeature);
-        assertEquals(circleId, circleFeature.getId());
+        assertNotNull(circleFeature,"createCircle() should return a non-null JsonFeature object");
+        assertEquals(circleId, circleFeature.getId(),"The JsonFeature ID should match the input ID parameter");
 
         // Check that the geometry is not null and contains the approximate center
         var coords = circleFeature.getGeometry().getCoordinates();
-        assertTrue(coords.length > 0);
+        assertTrue(coords.length > 0,"Generated circle geometry should contain at least one coordinate point");
         boolean containsCenter = false;
         for (var coord : coords) {
             if (Math.abs(coord.y - centerLat) < 1.0 && Math.abs(coord.x - centerLon) < 1.0) {
@@ -399,7 +391,7 @@ public class GHUtilityTest {
                 break;
             }
         }
-        assertTrue(containsCenter);
+        assertTrue(containsCenter,"The generated circle polygon should  include the original center within 1° tolerance");
     }
 }
 
