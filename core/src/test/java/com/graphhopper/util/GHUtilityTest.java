@@ -19,11 +19,14 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import org.junit.jupiter.api.Test;
+import com.github.javafaker.Faker;
 
 import java.util.List;
 
@@ -287,6 +290,116 @@ public class GHUtilityTest {
             assertTrue(problems.get(4).contains("longitude"));
 
         }
+    }
+
+
+    @Test
+    public void testGetDistanceBetweenNodes() {
+        try (BaseGraph graph = createGraph(null)) {
+            NodeAccess na = graph.getNodeAccess();
+
+            // Set node coordinates (approx Paris & London)
+            na.setNode(0, 48.8566, 2.3522, 10);
+            na.setNode(1, 51.5074, -0.1278, 10);
+
+            // Hmmmm
+            na.setNode(2 ,-190.2345, -191.3522, 10);
+
+            double dist = GHUtility.getDistance(0, 1, na);
+
+            // Expected distance between those coordinates
+            assertTrue(dist > 300_000 && dist < 350_000);
+
+            // Same node -> distance should be 0
+            double distSame = GHUtility.getDistance(0, 0, na);
+            assertEquals(0.0, distSame, 1e-6, "Distance between same nodes should be 0");
+
+            // 12742 km being the greatest possible distance between 2 points on earth
+            // Making sure the method doesnt try to normalise invalid values and give something
+            // coherent
+            double distInvalid = GHUtility.getDistance(0, 2, na);
+            assertTrue(distInvalid > 12742000);
+        }
+    }
+
+    @Test
+    public void testGetEdge() {
+        try(BaseGraph graph = createGraph(null)) {
+            graph.edge(0, 1).setDistance(10);
+            graph.edge(1, 2).setDistance(10);
+            graph.edge(0, 2).setDistance(20);
+            graph.edge(2, 3).setDistance(20);
+
+            // No edge should return null
+            assertNull(GHUtility.getEdge(graph, 0, 3));
+
+            // Single edge should return non-null
+            EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
+            assertNotNull(edge);
+
+            // Multiple edges should throw IllegalArgumentException saying:
+            // "There are multiple edges between nodes 0 and 1"
+            graph.edge(0,1).setDistance(25);
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> GHUtility.getEdge(graph, 0, 1));
+            assertTrue(ex.getMessage().contains("multiple edges"));
+        }
+    }
+
+    @Test
+    public void testSetSpeed() {
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 10, 0.5, true);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        EncodingManager em = new EncodingManager.Builder().add(speedEnc).add(accessEnc).build();
+
+        try (BaseGraph graph = createGraph(em)) {
+            // Forward
+            EdgeIteratorState edge = graph.edge(0, 1);
+
+            GHUtility.setSpeed(60.0, true, false, accessEnc, speedEnc, edge);
+
+            assertTrue(edge.get(accessEnc));
+            assertEquals(60.0, edge.get(speedEnc), 0.001);
+
+            // Backwards
+            GHUtility.setSpeed(40.0, false, true, accessEnc, speedEnc, edge);
+
+            assertFalse(edge.get(accessEnc));
+            assertEquals(40.0, edge.getReverse(speedEnc), 0.001);
+
+            // No speed
+            assertThrows(IllegalStateException.class, () -> {
+                GHUtility.setSpeed(0.0, true, false, accessEnc, speedEnc, edge);
+            });
+        }
+    }
+
+    @Test
+    public void testCreateCircleWithFaker() {
+        Faker faker = new Faker();
+
+        // Generate random ID and center coordinates
+        String circleId = faker.bothify("circle-###");
+        double centerLat = faker.number().randomDouble(6, -90, 90);
+        double centerLon = faker.number().randomDouble(6, -180, 180);
+        double radius = faker.number().randomDouble(2, 1, 1000);
+
+        var circleFeature = GHUtility.createCircle(circleId, centerLat, centerLon, radius);
+
+        assertNotNull(circleFeature);
+        assertEquals(circleId, circleFeature.getId());
+
+        // Check that the geometry is not null and contains the approximate center
+        var coords = circleFeature.getGeometry().getCoordinates();
+        assertTrue(coords.length > 0);
+        boolean containsCenter = false;
+        for (var coord : coords) {
+            if (Math.abs(coord.y - centerLat) < 1.0 && Math.abs(coord.x - centerLon) < 1.0) {
+                containsCenter = true;
+                break;
+            }
+        }
+        assertTrue(containsCenter);
     }
 }
 
