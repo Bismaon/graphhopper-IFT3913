@@ -142,7 +142,7 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testgetAdjnode() {
+    public void testGetAdjnode() {
         try (BaseGraph graph = createGraph(null)) {
             EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
             EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
@@ -158,15 +158,15 @@ public class GHUtilityTest {
             // Incorrect
             assertThrows(NullPointerException.class, () -> {
                 GHUtility.getAdjNode(graph, id12, 0);
-            }, "Node `0` does not exist on the edge and should throw an exception");
+            }, "Node `0` does not exist on the edge and should throw an exception.");
             int invalidEdgeId = -1;
             assertEquals(1, GHUtility.getAdjNode(graph, invalidEdgeId, 1),
-                    "Node `1` does not exist on the invalid edge and should throw an exception");  // from invalid edge id returns adjNode
+                    "Node `1` does not exist on the invalid edge and should return the adjNode specified.");
         }
     }
 
     @Test
-    public void testpathsEqualExceptOneEdge() {
+    public void testPathsEqualExceptOneEdge() {
         int source = 0;
         int target = 2;
         double distanceRef = 20.0;
@@ -229,7 +229,7 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testgetCommonNode() {
+    public void testGetCommonNode() {
         try (BaseGraph graph = createGraph(null)) {
             EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
             EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
@@ -258,7 +258,7 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testgetProblems() {
+    public void testGetProblems() {
         try (BaseGraph graph = createGraph(null)) {
             NodeAccess na = graph.getNodeAccess();
 
