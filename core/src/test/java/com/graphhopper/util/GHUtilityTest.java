@@ -87,6 +87,7 @@ public class GHUtilityTest {
         }
     }
 
+
     private List<String> testPaths(EncodingManager encodingManager, double distanceRef, double weightRef, int timeRef, int source, int target, double weightAlt, double distanceAlt, int timeAlt) {
         try (BaseGraph graph = createGraph(encodingManager)) {
 
