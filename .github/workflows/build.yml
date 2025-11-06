@@ -46,7 +46,35 @@ jobs:
           | sed -E 's/.*>([^<]*)/\1/' \
           | tail -2 | head -1 \
           | tr -d '%')
-
-          echo "Extracted mutation score (before-last): $SCORE"
+          
           echo "CURRENT_SCORE=$SCORE" >> $GITHUB_ENV
+      - name: Download previous mutation score
+        id: prev
+        uses: actions/download-artifact@v4
+        with:
+          name: mutation-score
+        continue-on-error: true
 
+      - name: Compare mutation score with previous
+        run: |
+          if [ -f previous_score.txt ]; then
+            PREV_SCORE=$(cat previous_score.txt)
+          else
+            PREV_SCORE=0
+          fi
+          echo "Previous mutation score: $PREV_SCORE"
+          echo "Current mutation score: $CURRENT_SCORE"
+          if (( CURRENT_SCORE < PREV_SCORE )); then
+            echo "Mutation score decreased ($PREV_SCORE → $CURRENT_SCORE)"
+            exit 1
+          else
+            echo "Mutation score maintained or improved ($PREV_SCORE → $CURRENT_SCORE)"
+          fi
+      - name: Save current mutation score for next runs
+        if: success()
+        run: echo "$CURRENT_SCORE" > previous_score.txt
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mutation-score
+          path: previous_score.txt
