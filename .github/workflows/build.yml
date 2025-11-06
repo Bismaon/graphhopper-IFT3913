@@ -36,10 +36,10 @@ jobs:
             ${{ runner.os}}-node_modules-
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
+
+      # current mutation score
       - name: Run mutation coverage
         run: mvn test-compile org.pitest:pitest-maven:mutationCoverage -DfailWhenNoMutations=false
-#      - name: TEST
-#        run: cd core/target/pi && ls
       - name: Extract mutation score
         run: |
           SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' core/target/pit-reports/index.html \
@@ -48,6 +48,8 @@ jobs:
           | tr -d '%')
           
           echo "CURRENT_SCORE=$SCORE" >> $GITHUB_ENV
+
+      # previous mutation score
       - name: Download previous mutation score
         id: prev
         uses: actions/download-artifact@v4
@@ -76,5 +78,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: mutation-score
+          name: mutation-score-${{ matrix.java-version }}
           path: previous_score.txt
