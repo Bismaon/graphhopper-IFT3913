@@ -44,9 +44,9 @@ jobs:
         run: |
           SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' core/target/pit-reports/index.html \
           | sed -E 's/.*>([^<]*)/\1/' \
-          | tail -2 | head -1 \
+          | awk 'NR==3' \
           | tr -d '%')
-          
+          echo "Extracted score: $SCORE"
           echo "CURRENT_SCORE=$SCORE" >> $GITHUB_ENV
 
       # previous mutation score
