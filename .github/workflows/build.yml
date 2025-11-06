@@ -54,7 +54,7 @@ jobs:
         id: prev
         uses: actions/download-artifact@v4
         with:
-          name: mutation-score
+          name: mutation-score-${{ matrix.java-version }}
         continue-on-error: true
 
       - name: Compare mutation score with previous
