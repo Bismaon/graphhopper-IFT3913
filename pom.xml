@@ -303,10 +303,10 @@
                 <version>1.20.6</version>
                 <configuration>
                     <targetClasses>
-                        <param>com.graphhopper.util.GHUtility</param>
+                        <param>com.graphhopper.*</param>
                     </targetClasses>
                     <targetTests>
-                        <param>com.graphhopper.util.GHUtilityTest</param>
+                        <param>com.graphhopper.*Test</param>
                     </targetTests>
                     <threads>4</threads>
                     <outputFormats>
