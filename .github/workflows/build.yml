@@ -44,17 +44,26 @@ jobs:
         run: |
           SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' core/target/pit-reports/index.html \
           | sed -E 's/.*>([^<]*)/\1/' \
-          | awk 'NR==3' \
+          | awk 'NR==2' \
           | tr -d '%')
           echo "Extracted score: $SCORE"
           echo "CURRENT_SCORE=$SCORE" >> $GITHUB_ENV
 
       # previous mutation score
-      - name: Download previous mutation score
-        id: prev
-        uses: actions/download-artifact@v4
+      - name: Find last workflow run ID
+        id: find_run
+        run: |
+          LATEST_RUN_ID=$(gh run list --workflow build.yml --json databaseId -q '.[1].databaseId')
+          echo "LATEST_RUN_ID=$LATEST_RUN_ID" >> $GITHUB_ENV
+          echo "Found run ID: $LATEST_RUN_ID"
+
+      - name: Download previous mutation score (from last run)
+        if: env.LATEST_RUN_ID != ''
+        uses: actions/download-artifact@v5
         with:
           name: mutation-score-${{ matrix.java-version }}
+          github-token: ${{ github.token }}
+          run-id: ${{ env.LATEST_RUN_ID }}
         continue-on-error: true
 
       - name: Compare mutation score with previous
