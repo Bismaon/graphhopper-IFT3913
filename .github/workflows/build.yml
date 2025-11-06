@@ -34,10 +34,11 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
-      - name: Testing
-        run: ls
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
+      - name: Testing
+        run: ls
+      
       - name: Extract mutation score
         run: |
           SCORE=$(grep -o '<div class="coverage_legend">[^<]*' target/pit-reports/index.html \
