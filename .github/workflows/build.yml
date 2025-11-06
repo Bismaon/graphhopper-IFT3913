@@ -36,12 +36,11 @@ jobs:
             ${{ runner.os}}-node_modules-
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
-      - name: Testing
-        run: ls
-      
+      - name: Run PIT mutation tests
+        run: mvn -B org.pitest:pitest-maven:mutationCoverage
       - name: Extract mutation score
         run: |
-          SCORE=$(grep -o '<div class="coverage_legend">[^<]*' target/pit-reports/index.html \
+          SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' target/pit-reports/index.html \
           | sed -E 's/.*>([^<]*)/\1/' \
           | tail -2 | head -1 \
           | tr -d '%')
