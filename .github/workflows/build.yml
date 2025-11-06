@@ -37,9 +37,7 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
       - name: TEST
-        run: | 
-          cd target \
-          | ls
+        run: cd target && ls
 #      - name: Extract mutation score
 #        run: |
 #          SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' target/pit-reports/index.html \
