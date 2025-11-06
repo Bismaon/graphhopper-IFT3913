@@ -52,6 +52,8 @@ jobs:
       # previous mutation score
       - name: Find last workflow run ID
         id: find_run
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           LATEST_RUN_ID=$(gh run list --workflow build.yml --json databaseId -q '.[1].databaseId')
           echo "LATEST_RUN_ID=$LATEST_RUN_ID" >> $GITHUB_ENV
