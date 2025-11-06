@@ -34,6 +34,8 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
+      - name: Testing
+        run: ls
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
       - name: Extract mutation score
