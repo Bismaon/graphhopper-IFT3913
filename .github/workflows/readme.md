@@ -15,7 +15,7 @@ Pour récupérer le score, on utilise la commande suivante :
 ```
 SCORE=$(grep -o '<div class="coverage_percentage">[^<]*' core/target/pit-reports/index.html \
       | sed -E 's/.*>([^<]*)/\1/' \
-      | awk 'NR==3' \
+      | awk 'NR==2' \
       | tr -d '%')
 ```
       
