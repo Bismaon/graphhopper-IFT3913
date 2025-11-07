@@ -31,6 +31,7 @@ import com.github.javafaker.Faker;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Peter Karich
@@ -392,6 +393,65 @@ public class GHUtilityTest {
             }
         }
         assertTrue(containsCenter,"The generated circle polygon should  include the original center within 1° tolerance");
+    }
+
+    public Graph mockGraphIterValue(int numNodes, int iterValue) {
+        Graph mockGraph = mock(Graph.class);
+        NodeAccess mockNodeAccess = mock(NodeAccess.class);
+        EdgeExplorer mockExplorer = mock(EdgeExplorer.class);
+        EdgeIterator mockIterator = mock(EdgeIterator.class);
+
+        when(mockGraph.getNodes()).thenReturn(numNodes);
+        when(mockGraph.getNodeAccess()).thenReturn(mockNodeAccess);
+
+        // try loop
+        when(mockGraph.createEdgeExplorer()).thenReturn(mockExplorer);
+
+        // for loop
+        when(mockNodeAccess.getLat(anyInt())).thenReturn(45.0); // valid lat
+        when(mockNodeAccess.getLon(anyInt())).thenReturn(90.0); // valid lon
+        when(mockExplorer.setBaseNode(anyInt())).thenReturn(mockIterator); // iter now behaves as we decide
+
+        //while loop
+        when(mockIterator.next()).thenReturn(true, false);
+
+        // produce invalid node index with given value
+        when(mockIterator.getAdjNode()).thenReturn(iterValue);
+        return mockGraph;
+    }
+
+    @Test
+    public void testGetProblems_withInvalidAdjNodes(){
+        Graph mockGraph_gt = mockGraphIterValue(3,3);
+        List<String> problems_gt = GHUtility.getProblems(mockGraph_gt);
+
+        assertFalse(problems_gt.isEmpty(), "Should detect invalid edge adjacency");
+        assertTrue(problems_gt.get(0).contains("greater or equal to getNodes"), "The problem should be  'edge of x has a node y greater or equal to getNodes()");
+
+        Graph mockGraph_ng = mockGraphIterValue(3,-1);
+        List<String> problems_ng = GHUtility.getProblems(mockGraph_ng);
+
+        assertFalse(problems_ng.isEmpty(), "Should detect invalid edge adjacency");
+        assertTrue(problems_ng.get(0).contains("has a negative node"), "The problem should be  'edge of x has a negative node y");
+    }
+
+    @Test
+    public void testGetProblems_withExceptionInGraph() {
+        Graph mockGraph = mock(Graph.class);
+        NodeAccess mockNodeAccess = mock(NodeAccess.class);
+
+        when(mockGraph.getNodes()).thenReturn(3);
+        when(mockGraph.getNodeAccess()).thenReturn(mockNodeAccess);
+
+        // Throw when trying to get the explorer
+        when(mockGraph.createEdgeExplorer()).thenThrow(new IllegalStateException("Uh oh... seems like the graph broke down. Hope you know a fix."));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> GHUtility.getProblems(mockGraph),
+                "Should wrap the internal exception into a RuntimeException");
+        assertTrue(
+                ex.getMessage().contains("problem with node"),
+                "Exception message should mention the node index 'problem with node X'"
+        );
     }
 }
 
