@@ -80,3 +80,13 @@ Vérifier que `getProblems()` déclenche la bonne erreur face à une erreur inte
 - Le message contient la chaîne `"problem with node"`, confirmant que le bloc `catch` a bien été exécuté.
 ---
 
+## Rickroll github action
+
+Pour cela nous avons modifié le 'action.yml' et 'index.js' du repo 'random-rickroll' donné dans l'énoncé puis ajouté le code ci-dessous dans le workflow principal 'build.yml' pour qu'il y aie un check 'continuous-integration/critical-logs' lorsqu'on appuie sur la petite croix rouge après un commit et le build échoue, puis si le développeur veut regarder les logs et appuie sur 'details', il est redirigé vers un nouvel onglet contenant le rickroll.
+```- name: Rickroll on Failure                                                             
+        if: failure() # This ensures it ONLY runs if 'mvn test' failed                        
+        uses: ./.github/actions/rickroll                                                      
+        with:                                                                                 
+          percentage: '100' # 100% chance to trigger since it already failed                  
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
