@@ -83,6 +83,9 @@ Vérifier que `getProblems()` déclenche la bonne erreur face à une erreur inte
 ## Rickroll github action
 
 Pour cela nous avons modifié le 'action.yml' et 'index.js' du repo 'random-rickroll' donné dans l'énoncé puis ajouté le code ci-dessous dans le workflow principal 'build.yml' pour qu'il y aie un check 'continuous-integration/critical-logs' lorsqu'on appuie sur la petite croix rouge après un commit et le build échoue, puis si le développeur veut regarder les logs et appuie sur 'details', il est redirigé vers un nouvel onglet contenant le rickroll.
+
+Un test 'RickrollTest.java' a été ajouté dans 'util' qui échoue toujours pour montrer le fonctionnement de l'action.
+
 ```- name: Rickroll on Failure                                                             
         if: failure() # This ensures it ONLY runs if 'mvn test' failed                        
         uses: ./.github/actions/rickroll                                                      
