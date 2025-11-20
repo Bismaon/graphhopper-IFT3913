@@ -1,0 +1,16 @@
+name: 'Random RickRoll'
+description: 'Make GitHub rick-roll innocent people on failure.'
+inputs: 
+  percentage:
+    description: 'Percentage chance (0-100)'
+    required: true
+  message:
+    description: 'Optional message'
+    required: false
+    default: ''
+  GITHUB_TOKEN:
+    description: 'Github token'
+    required: true
+runs:
+  using: 'node20'
+  main: 'index.js'

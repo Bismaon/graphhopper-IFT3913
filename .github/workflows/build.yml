@@ -37,6 +37,13 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+      - name: Rickroll on Failure
+        if: failure() # This ensures it ONLY runs if 'mvn test' failed
+        uses: ./.github/actions/rickroll
+        with:
+          percentage: '100' # 100% chance to trigger since it already failed
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # current mutation score
       - name: Run mutation coverage
         run: mvn test-compile org.pitest:pitest-maven:mutationCoverage -DfailWhenNoMutations=false
